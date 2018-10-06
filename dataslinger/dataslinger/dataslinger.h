@@ -7,6 +7,7 @@
 namespace dataslinger
 {
 
+/// Responsible for sending data
 class DataSlinger
 {
 public:
@@ -17,9 +18,7 @@ public:
 
     boost::signals2::signal<void()> signal_beforeSend;
     boost::signals2::signal<void()> signal_afterSend;
-
-    boost::signals2::signal<void()> signal_beforeReceive;
-    boost::signals2::signal<void()> signal_afterReceive;
+    void send();
 
 private:
     class DataSlingerImpl;
