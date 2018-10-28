@@ -15,6 +15,8 @@ public:
     ~DataReceiver();
     DataReceiver(const DataReceiver&) = delete;
     DataReceiver& operator=(const DataReceiver&) = delete;
+    DataReceiver(DataReceiver&&);
+    DataReceiver& operator=(DataReceiver&&);
 
     boost::signals2::signal<void()> signal_beforeReceive;
     boost::signals2::signal<void()> signal_afterReceive;

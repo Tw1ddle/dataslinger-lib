@@ -15,6 +15,8 @@ public:
     ~DataSlinger();
     DataSlinger(const DataSlinger&) = delete;
     DataSlinger& operator=(const DataSlinger&) = delete;
+    DataSlinger(DataSlinger&&);
+    DataSlinger& operator=(DataSlinger&&);
 
     boost::signals2::signal<void()> signal_beforeSend;
     boost::signals2::signal<void()> signal_afterSend;
