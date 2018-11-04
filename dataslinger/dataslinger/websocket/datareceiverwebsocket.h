@@ -1,8 +1,12 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include "dataslinger/datareceiver.h"
+#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/event/event.h"
+#include "dataslinger/message/message.h"
 
 namespace dataslinger
 {
@@ -14,12 +18,18 @@ namespace websocket
 class DataReceiverWebSocket
 {
 public:
-    DataReceiverWebSocket(DataReceiver* q);
+    DataReceiverWebSocket(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info);
     ~DataReceiverWebSocket();
     DataReceiverWebSocket(const DataReceiverWebSocket&) = delete;
     DataReceiverWebSocket& operator=(const DataReceiverWebSocket&) = delete;
     DataReceiverWebSocket(DataReceiverWebSocket&&) = default;
     DataReceiverWebSocket& operator=(DataReceiverWebSocket&&) = default;
+
+    /// Call once to set the receiver up
+    void run();
+
+    /// Poll the receiver to process new messages received or events that have occurred
+    void poll();
 
 private:
     class DataReceiverWebSocketImpl;

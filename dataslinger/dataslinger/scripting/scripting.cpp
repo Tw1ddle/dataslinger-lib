@@ -1,4 +1,4 @@
-#include "dataslinger/scripting.h"
+#include "dataslinger/scripting/scripting.h"
 
 #include <boost/chrono.hpp>
 #include <boost/filesystem.hpp>
@@ -9,7 +9,6 @@ namespace dataslinger
 
 namespace scripting
 {
-
 
 
 }

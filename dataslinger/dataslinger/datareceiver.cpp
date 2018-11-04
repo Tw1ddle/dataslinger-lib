@@ -1,12 +1,13 @@
 #include "dataslinger/datareceiver.h"
 
 #include <cstdlib>
+#include <functional>
+#include <future>
 #include <memory>
 
-#include <boost/scope_exit.hpp>
-
-#include <chaiscript/chaiscript.hpp>
-
+#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/event/event.h"
+#include "dataslinger/message/message.h"
 #include "dataslinger/websocket/datareceiverwebsocket.h"
 
 namespace dataslinger
@@ -15,12 +16,17 @@ namespace dataslinger
 class DataReceiver::DataReceiverImpl
 {
 public:
-    DataReceiverImpl(DataReceiver* pQ) : q{pQ}, d{std::make_unique<websocket::DataReceiverWebSocket>(q)}
+    DataReceiverImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info)
+        : d{std::make_unique<websocket::DataReceiverWebSocket>(onReceive, onEvent, info)}
     {
+        m_receiverFuture = std::async(std::launch::async, [this]{
+            d->run();
+        });
     }
 
     ~DataReceiverImpl()
     {
+        d->poll();
     }
 
     DataReceiverImpl(const DataReceiverImpl&) = delete;
@@ -28,25 +34,17 @@ public:
     DataReceiverImpl(DataReceiverImpl&&) = default;
     DataReceiverImpl& operator=(DataReceiverImpl&&) = default;
 
-    void receive()
+    void poll()
     {
-        BOOST_SCOPE_EXIT(this_) {
-            this_->q->signal_afterReceive();
-        } BOOST_SCOPE_EXIT_END
-
-        q->signal_beforeReceive();
-
-        // TODO hook into engine
+        d->poll();
     }
 
 private:
-    DataReceiver* q;
+    std::future<void> m_receiverFuture;
     std::unique_ptr<websocket::DataReceiverWebSocket> d;
-
-    chaiscript::ChaiScript m_engine;
 };
 
-DataReceiver::DataReceiver() : d{std::make_unique<DataReceiver::DataReceiverImpl>(this)}
+DataReceiver::DataReceiver(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<DataReceiver::DataReceiverImpl>(onReceive, onEvent, info)}
 {
 }
 
@@ -68,6 +66,11 @@ DataReceiver& DataReceiver::operator=(DataReceiver&& other)
     d = std::move(other.d);
     other.d = nullptr;
     return *this;
+}
+
+void DataReceiver::poll()
+{
+    d->poll();
 }
 
 }

@@ -1,8 +1,11 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
-#include <boost/signals2/signal.hpp>
+#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/event/event.h"
+#include "dataslinger/message/message.h"
 
 namespace dataslinger
 {
@@ -11,16 +14,18 @@ namespace dataslinger
 class DataSlinger
 {
 public:
-    DataSlinger();
+    DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info);
     ~DataSlinger();
     DataSlinger(const DataSlinger&) = delete;
     DataSlinger& operator=(const DataSlinger&) = delete;
     DataSlinger(DataSlinger&&);
     DataSlinger& operator=(DataSlinger&&);
 
-    boost::signals2::signal<void()> signal_beforeSend;
-    boost::signals2::signal<void()> signal_afterSend;
-    void send();
+    /// Sends a message to any connected receivers (enqueues for sending in some cases)
+    void send(const dataslinger::message::Message& message);
+
+    /// Poll to process responses from any connected receiver sessions and handle any events that have occurred
+    void poll();
 
 private:
     class DataSlingerImpl;

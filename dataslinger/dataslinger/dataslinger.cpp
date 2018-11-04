@@ -1,12 +1,12 @@
 #include "dataslinger/dataslinger.h"
 
 #include <cstdlib>
+#include <future>
 #include <memory>
 
-#include <boost/scope_exit.hpp>
-
-#include <chaiscript/chaiscript.hpp>
-
+#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/event/event.h"
+#include "dataslinger/message/message.h"
 #include "dataslinger/websocket/dataslingerwebsocket.h"
 
 namespace dataslinger
@@ -15,8 +15,11 @@ namespace dataslinger
 class DataSlinger::DataSlingerImpl
 {
 public:
-    DataSlingerImpl(DataSlinger* pQ) : q{pQ}, d{std::make_unique<websocket::DataSlingerWebSocket>(pQ)}
+    DataSlingerImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<websocket::DataSlingerWebSocket>(onReceive, onEvent, info)}
     {
+        m_slingerFuture = std::async(std::launch::async, [this]{
+            d->run();
+        });
     }
 
     ~DataSlingerImpl()
@@ -28,25 +31,22 @@ public:
     DataSlingerImpl(DataSlingerImpl&&) = default;
     DataSlingerImpl& operator=(DataSlingerImpl&&) = default;
 
-    void send()
+    void send(const dataslinger::message::Message& message)
     {
-        BOOST_SCOPE_EXIT(this_) {
-            this_->q->signal_afterSend();
-        } BOOST_SCOPE_EXIT_END
+        d->send(message);
+    }
 
-        q->signal_beforeSend();
-
-        // TODO hook into engine
+    void poll()
+    {
+        d->poll();
     }
 
 private:
-    DataSlinger* q;
+    std::future<void> m_slingerFuture;
     std::unique_ptr<websocket::DataSlingerWebSocket> d;
-
-    chaiscript::ChaiScript m_engine;
 };
 
-DataSlinger::DataSlinger() : d{std::make_unique<DataSlinger::DataSlingerImpl>(this)}
+DataSlinger::DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<DataSlinger::DataSlingerImpl>(onReceive, onEvent, info)}
 {
 }
 
@@ -70,9 +70,14 @@ DataSlinger& DataSlinger::operator=(DataSlinger&& other)
     return *this;
 }
 
-void DataSlinger::send()
+void DataSlinger::send(const dataslinger::message::Message& message)
 {
-    d->send();
+    d->send(message);
+}
+
+void DataSlinger::poll()
+{
+    d->poll();
 }
 
 }
