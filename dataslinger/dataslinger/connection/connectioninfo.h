@@ -10,6 +10,7 @@ namespace dataslinger
 namespace connection
 {
 
+/// Enum whose values represent connection info field names/keys
 enum class ConnectionInfoDataKeys
 {
     WEBSOCKET_RECEIVER_HOST_STRING,
@@ -30,7 +31,10 @@ public:
     ConnectionInfo& operator=(ConnectionInfo&&) = default;
 
     const dataslinger::util::HeterogeneousMap<ConnectionInfoDataKeys>& getInfo() const;
+
+    /// Whether the given connection info contains required fields for creating a websocket-backed data slinger
     bool hasWebSocketSlingerInfo() const;
+    /// Whether the given connection info contains required fields for creating a websocket-backed receiver
     bool hasWebSocketReceiverInfo() const;
 
 private:

@@ -20,6 +20,7 @@
 
 #include "dataslinger/connection/connectioninfo.h"
 #include "dataslinger/event/event.h"
+#include "dataslinger/event/eventhelpers.h"
 #include "dataslinger/message/message.h"
 
 namespace
@@ -31,6 +32,7 @@ class DataSlingerWebSocketSession : public std::enable_shared_from_this<DataSlin
 public:
     explicit DataSlingerWebSocketSession(boost::asio::ip::tcp::socket socket) : m_socketStream(std::move(socket)), m_strand(m_socketStream.get_executor())
     {
+        m_socketStream.binary(true);
     }
 
     void run()
@@ -67,20 +69,24 @@ private:
 
         queueInformationalEvent("Did accept websocket upgrade request");
 
-        doRead();
+        //doRead();
     }
 
+    // TODO need to convert data into Message objects and write out to the receiveQueue
+    /*
     void doRead()
     {
-        // Read a message into our buffer
+        queueInformationalEvent("Will wait for something to read");
+
         m_socketStream.async_read(
             m_buffer,
             boost::asio::bind_executor(m_strand,
             std::bind(&DataSlingerWebSocketSession::onRead, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
     }
-
-    void onRead(const boost::system::error_code ec, const std::size_t /*bytesTransferred*/)
+    void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
+        queueInformationalEvent(std::string("Did perform read of ").append(std::to_string(bytesTransferred)).append(" bytes"));
+
         // This indicates that the session was closed
         if(ec == boost::beast::websocket::error::closed) {
             return;
@@ -92,13 +98,19 @@ private:
         }
 
         // Echo the message
-        m_socketStream.text(m_socketStream.got_text());
-        m_socketStream.async_write(m_buffer.data(),
-            boost::asio::bind_executor(m_strand,
-            std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
-    }
+        //m_buffer.consume(m_buffer.size());
 
-    void onWrite(const boost::system::error_code ec, const std::size_t /*bytesTransferred*/)
+        //m_socketStream.text(m_socketStream.got_text());
+        //m_socketStream.async_write(m_buffer.data(),
+        //    boost::asio::bind_executor(m_strand,
+        //    std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
+
+    }
+    */
+
+    // TODO need to read out after send() is called
+    /*
+    void onWrite(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
         if(ec) {
             queueFatalEvent(ec, "write");
@@ -111,30 +123,25 @@ private:
         // Do another read
         doRead();
     }
+    */
 
     // Report a fatal error
     void queueFatalEvent(const boost::system::error_code ec, const std::string what)
     {
         const std::string msg = std::string(what).append("_").append(ec.message());
 
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, msg }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     void queueFatalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     // Report an informational event
     void queueInformationalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_socketStream;
@@ -248,28 +255,21 @@ private:
     }
 
     // Report a fatal event
-    void queueFatalEvent(boost::system::error_code ec, std::string what)
+    void queueFatalEvent(const boost::system::error_code ec, const std::string what)
     {
-        const std::string msg = what.append("_").append(ec.message());
-
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, msg }
-        }}}));
+        const std::string msg = std::string(what).append("_").append(ec.message());
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     void queueFatalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     // Report an informational event
     void queueInformationalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     std::vector<std::shared_ptr<DataSlingerWebSocketSession>> m_sessions;
@@ -289,6 +289,7 @@ namespace dataslinger
 namespace websocket
 {
 
+// WebSocket server implementation
 class DataSlingerWebSocket::DataSlingerWebSocketImpl
 {
 public:
@@ -374,17 +375,13 @@ public:
 private:
     void queueFatalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     // Report an informational event
     void queueInformationalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
     std::shared_ptr<boost::asio::io_context> m_ioc{nullptr}; ///< The IO context

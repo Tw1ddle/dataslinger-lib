@@ -17,16 +17,20 @@
 
 #include "dataslinger/connection/connectioninfo.h"
 #include "dataslinger/event/event.h"
+#include "dataslinger/event/eventhelpers.h"
+#include "dataslinger/message/message.h"
 
 namespace
 {
 
-// Sends a WebSocket message and prints the response
+// WebSocket client
 class DataReceiverWebSocketSession : public std::enable_shared_from_this<DataReceiverWebSocketSession>
 {
 public:
     DataReceiverWebSocketSession(const dataslinger::connection::ConnectionInfo& info) : m_resolver(m_ioContext), m_socketStream(m_ioContext)
     {
+        m_socketStream.binary(true);
+
         if(!info.hasWebSocketReceiverInfo()) {
             queueFatalEvent("Will fail to create receiver, missing connection info");
             return;
@@ -50,7 +54,7 @@ public:
     void poll(const std::function<void(const dataslinger::message::Message&)>& onReceive,
               const std::function<void(const dataslinger::event::Event&)>& onEvent)
     {
-        m_messageQueue.consume_all([&onReceive](const dataslinger::message::Message m) {
+        m_receiveQueue.consume_all([&onReceive](const dataslinger::message::Message m) {
             onReceive(m);
         });
         m_eventQueue.consume_all([&onEvent](const dataslinger::event::Event e) {
@@ -84,7 +88,7 @@ private:
             return;
         }
 
-        queueInformationalEvent("Did connect, will asynchronously send the websocket upgrade request handshake");
+        queueInformationalEvent("Did connect, will asynchronously send the websocket upgrade request (handshake)");
 
         m_socketStream.async_handshake(m_host, "/", std::bind(&DataReceiverWebSocketSession::onHandshake, shared_from_this(), std::placeholders::_1));
     }
@@ -98,9 +102,20 @@ private:
 
         queueInformationalEvent("Did receive websocket upgrade handshake response");
 
-        // Send the message
-        m_socketStream.async_write(boost::asio::buffer("TODO - text message"),
-            std::bind(&DataReceiverWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+        // TODO need to convert data into Message objects and write out to the receiveQueue
+    }
+
+    /*
+    void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
+    {
+        boost::ignore_unused(bytesTransferred);
+
+        if(ec) {
+            queueFatalEvent(ec, "read");
+            return;
+        }
+
+        queueInformationalEvent("Did read message into buffer");
     }
 
     void onWrite(const boost::system::error_code ec, const std::size_t bytesTransferred)
@@ -112,63 +127,31 @@ private:
             return;
         }
 
-        queueInformationalEvent("receiver onwrite");
+        queueInformationalEvent("Did write message");
+
+        queueInformationalEvent("Will read message into buffer");
 
         // Read a message into our buffer
         m_socketStream.async_read(m_buffer,
             std::bind(&DataReceiverWebSocketSession::onRead, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
     }
-
-    void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
-    {
-        boost::ignore_unused(bytesTransferred);
-
-        if(ec) {
-            queueFatalEvent(ec, "read");
-            return;
-        }
-
-        queueInformationalEvent("read message into buffer");
-
-        // TODO only close when we ask it to
-        // Close the WebSocket connection
-        //m_socketStream.async_close(boost::beast::websocket::close_code::normal,
-        //    std::bind(&DataReceiverWebSocketSession::onClose, shared_from_this(), std::placeholders::_1));
-    }
-
-    void onClose(const boost::system::error_code ec)
-    {
-        if(ec) {
-            queueFatalEvent(ec, "close");
-            return;
-        }
-
-        queueInformationalEvent("closing receiver connection gracefully");
-        // If we get here then the connection is closed gracefully
-    }
+    */
 
     // Report a fatal error
     void queueFatalEvent(const boost::system::error_code ec, const std::string what)
     {
         const std::string msg = std::string(what).append("_").append(ec.message());
-
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, msg }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::RECEIVER, what));
     }
     void queueFatalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::RECEIVER, what));
     }
 
     // Report an informational event
     void queueInformationalEvent(const std::string what)
     {
-        m_eventQueue.push(dataslinger::event::Event({{{
-            { dataslinger::event::EventDataKeys::INFORMATIONAL_MESSAGE_STRING, what }
-        }}}));
+        m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::RECEIVER, what));
     }
 
     boost::asio::io_context m_ioContext;
@@ -179,7 +162,7 @@ private:
     std::string m_port;
 
     // TODO ideally bound capacity by memory used or make unlimited
-    boost::lockfree::spsc_queue<dataslinger::message::Message, boost::lockfree::fixed_sized<true>> m_messageQueue{10000}; ///< Queue that grows as receiver receives messages
+    boost::lockfree::spsc_queue<dataslinger::message::Message, boost::lockfree::fixed_sized<true>> m_receiveQueue{10000}; ///< Queue that grows as receiver receives messages
     boost::lockfree::spsc_queue<dataslinger::event::Event, boost::lockfree::fixed_sized<true>> m_eventQueue{10000}; ///< Queue of internal events generated by the receiver
 };
 

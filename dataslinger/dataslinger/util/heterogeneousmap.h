@@ -22,6 +22,11 @@ public:
     HeterogeneousMap(HeterogeneousMap&&) = default;
     HeterogeneousMap& operator=(HeterogeneousMap&&) = default;
 
+    boost::any& operator[](const T&& key)
+    {
+        return m_map[key];
+    }
+
     bool hasValue(const T key) const
     {
         return m_map.find(key) != m_map.end();
