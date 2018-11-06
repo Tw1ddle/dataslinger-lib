@@ -117,9 +117,8 @@ private:
 
         queueInformationalEvent(std::string("Did perform read of ").append(std::to_string(bytesTransferred)).append(" bytes"));
 
-        const dataslinger::message::Message* msg = reinterpret_cast<const dataslinger::message::Message*>(m_receiveBuffer.data().data());
-
-        m_receiveQueue.push(*msg);
+        const auto msgDataPtr = static_cast<const std::byte*>(m_receiveBuffer.data().data());
+        m_receiveQueue.push(dataslinger::message::Message(msgDataPtr, msgDataPtr + m_receiveBuffer.size()));
 
         queueInformationalEvent("Appended message to received queue, will clear intermediate buffer and continue to wait to receive messages");
 

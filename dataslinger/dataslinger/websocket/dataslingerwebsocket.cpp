@@ -90,9 +90,8 @@ private:
 
         queueInformationalEvent(std::string("Did perform read of ").append(std::to_string(bytesTransferred)).append(" bytes"));
 
-        const dataslinger::message::Message* msg = reinterpret_cast<const dataslinger::message::Message*>(m_receiveBuffer.data().data());
-
-        m_receiveQueue.push(*msg);
+        const auto msgDataPtr = static_cast<const std::byte*>(m_receiveBuffer.data().data());
+        m_receiveQueue.push(dataslinger::message::Message(msgDataPtr, msgDataPtr + m_receiveBuffer.size()));
 
         queueInformationalEvent("Appended message to received queue, will clear intermediate buffer and continue to wait to receive messages");
 
@@ -114,13 +113,9 @@ private:
 
         queueInformationalEvent("Will write a message");
 
-        dataslinger::message::Message msg;
-        m_sendQueue.consume_one([&msg](const dataslinger::message::Message& m) {
-            msg = m;
+        m_sendQueue.consume_one([this](const dataslinger::message::Message& m) {
+            m_sendBuffer = m;
         });
-
-        auto const msgPtr = reinterpret_cast<std::byte*>(&msg);
-        m_sendBuffer = std::vector<std::byte>(msgPtr, msgPtr + sizeof(dataslinger::message::Message));
 
         m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
             boost::asio::bind_executor(m_strand,
