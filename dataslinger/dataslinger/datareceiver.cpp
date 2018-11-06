@@ -26,7 +26,7 @@ public:
 
     ~DataReceiverImpl()
     {
-        d->poll();
+        poll();
     }
 
     DataReceiverImpl(const DataReceiverImpl&) = delete;

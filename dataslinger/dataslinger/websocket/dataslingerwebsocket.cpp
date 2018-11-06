@@ -9,13 +9,13 @@
 #include <thread>
 #include <vector>
 
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
 #include "dataslinger/connection/connectioninfo.h"
@@ -69,47 +69,64 @@ private:
 
         queueInformationalEvent("Did accept websocket upgrade request");
 
-        //doRead();
+        doRead();
+        doWrite();
     }
 
-    // TODO need to convert data into Message objects and write out to the receiveQueue
-    /*
     void doRead()
     {
-        queueInformationalEvent("Will wait for something to read");
+        queueInformationalEvent("Will wait to receive a message");
 
-        m_socketStream.async_read(
-            m_buffer,
-            boost::asio::bind_executor(m_strand,
-            std::bind(&DataSlingerWebSocketSession::onRead, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
+        m_socketStream.async_read(m_receiveBuffer,
+            std::bind(&DataSlingerWebSocketSession::onRead, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
     }
+
     void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
-        queueInformationalEvent(std::string("Did perform read of ").append(std::to_string(bytesTransferred)).append(" bytes"));
-
-        // This indicates that the session was closed
-        if(ec == boost::beast::websocket::error::closed) {
-            return;
-        }
-
         if(ec) {
             queueFatalEvent(ec, "read");
             return;
         }
 
-        // Echo the message
-        //m_buffer.consume(m_buffer.size());
+        queueInformationalEvent(std::string("Did perform read of ").append(std::to_string(bytesTransferred)).append(" bytes"));
 
-        //m_socketStream.text(m_socketStream.got_text());
-        //m_socketStream.async_write(m_buffer.data(),
-        //    boost::asio::bind_executor(m_strand,
-        //    std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
+        const dataslinger::message::Message* msg = reinterpret_cast<const dataslinger::message::Message*>(m_receiveBuffer.data().data());
 
+        m_receiveQueue.push(*msg);
+
+        queueInformationalEvent("Appended message to received queue, will clear intermediate buffer and continue to wait to receive messages");
+
+        m_receiveBuffer.consume(m_receiveBuffer.size());
+
+        doRead();
+        doWrite();
     }
-    */
 
-    // TODO need to read out after send() is called
-    /*
+    void doWrite()
+    {
+        queueInformationalEvent("Will wait for a message to appear in the send queue");
+
+        // TODO use condition var or similar, and make it so thread dies when service is stopped - possibly build into the io service
+        // TODO this approach will hang up a whole thread most of the time, will break horribly
+        while(!m_sendQueue.read_available()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+
+        queueInformationalEvent("Will write a message");
+
+        dataslinger::message::Message msg;
+        m_sendQueue.consume_one([&msg](const dataslinger::message::Message& m) {
+            msg = m;
+        });
+
+        auto const msgPtr = reinterpret_cast<std::byte*>(&msg);
+        m_sendBuffer = std::vector<std::byte>(msgPtr, msgPtr + sizeof(dataslinger::message::Message));
+
+        m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
+            boost::asio::bind_executor(m_strand,
+            std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
+    }
+
     void onWrite(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
         if(ec) {
@@ -117,13 +134,14 @@ private:
             return;
         }
 
-        // Clear the buffer
-        m_buffer.consume(m_buffer.size());
+        queueInformationalEvent(std::string("Did perform write of ").append(std::to_string(bytesTransferred)).append(" bytes"));
 
-        // Do another read
-        doRead();
+        queueInformationalEvent("Did write, will clear intermediate buffer and continue to write messages as necessary");
+
+        m_sendBuffer.clear();
+
+        doWrite();
     }
-    */
 
     // Report a fatal error
     void queueFatalEvent(const boost::system::error_code ec, const std::string what)
@@ -146,7 +164,8 @@ private:
 
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_socketStream;
     boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
-    boost::beast::multi_buffer m_buffer;
+    boost::beast::flat_buffer m_receiveBuffer;
+    std::vector<std::byte> m_sendBuffer; // TODO how to use a beast buffer type with this
 
     boost::lockfree::spsc_queue<dataslinger::message::Message, boost::lockfree::fixed_sized<true>> m_sendQueue{10000}; ///< Queue that grows as messages are enqueued to be sent
     boost::lockfree::spsc_queue<dataslinger::message::Message, boost::lockfree::fixed_sized<true>> m_receiveQueue{10000}; ///< Queue that grows as slinger receives messages
@@ -272,14 +291,14 @@ private:
         m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
+    boost::asio::ip::tcp::acceptor m_acceptor;
+    boost::asio::ip::tcp::socket m_socket;
+    boost::asio::ip::tcp::endpoint m_endpoint;
+
     std::vector<std::shared_ptr<DataSlingerWebSocketSession>> m_sessions;
     std::mutex m_sessionsMutex;
 
     boost::lockfree::spsc_queue<dataslinger::event::Event, boost::lockfree::fixed_sized<true>> m_eventQueue{10000}; ///< Queue of internal events generated by the listener
-
-    boost::asio::ip::tcp::acceptor m_acceptor;
-    boost::asio::ip::tcp::socket m_socket;
-    boost::asio::ip::tcp::endpoint m_endpoint;
 };
 
 }
@@ -341,10 +360,12 @@ public:
         }
         m_ioc->run();
 
-        // Block until all the threads exit
+        queueInformationalEvent("Data slinger is closing down, will block until all the I/O service threads exit");
         for(auto& t : v) {
             t.join();
         }
+
+        queueInformationalEvent("Data slinger is closing down fully, I/O service threads have joined");
     }
 
     void send(const dataslinger::message::Message& message)
@@ -384,13 +405,12 @@ private:
         m_eventQueue.push(dataslinger::event::makeEvent(dataslinger::event::EventSourceKind::SLINGER, what));
     }
 
+    const std::function<void(const dataslinger::message::Message&)> m_onReceive; ///< Callback triggered when the slinger receives a message
+    const std::function<void(const dataslinger::event::Event&)> m_onEvent; ///< Callback triggered when the slinger produces an event
+    const dataslinger::connection::ConnectionInfo m_info; ///< Connection info
+
     std::shared_ptr<boost::asio::io_context> m_ioc{nullptr}; ///< The IO context
     std::shared_ptr<DataSlingerWebSocketListener> m_listener{nullptr}; ///< The listener that allows receivers to connect to the slinger
-
-    std::function<void(const dataslinger::message::Message&)> m_onReceive; ///< Callback triggered when the slinger receives a message
-    std::function<void(const dataslinger::event::Event&)> m_onEvent; ///< Callback triggered when the slinger produces an event
-
-    dataslinger::connection::ConnectionInfo m_info; ///< Connection info
 
     boost::lockfree::spsc_queue<dataslinger::event::Event, boost::lockfree::fixed_sized<true>> m_eventQueue{10000}; ///< Queue of internal events generated by the slinger
 };

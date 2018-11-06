@@ -10,16 +10,16 @@ namespace dataslinger
 namespace event
 {
 
-enum class EventSourceKind
-{
-    SLINGER,
-    RECEIVER
-};
-
 enum class EventKind
 {
     INFORMATIONAL,
     ERROR,
+};
+
+enum class EventSourceKind
+{
+    SLINGER,
+    RECEIVER
 };
 
 enum class ErrorSeverity
@@ -30,11 +30,11 @@ enum class ErrorSeverity
 
 enum class EventDataKeys
 {
-    EVENT_KIND,
-    EVENT_SOURCE_KIND,
-    INSTANCE_ID,
-    ERROR_SEVERITY,
-    MESSAGE_STRING,
+    EVENT_KIND, ///< The sort of event e.g. informational, error
+    EVENT_SOURCE_KIND, ///< The sort of source the event came from e.g. a slinger, a receiver
+    ERROR_SEVERITY, ///< If the event is an error event, how serious is it
+    MESSAGE_STRING, ///< Informational message describing what the event is
+    INSTANCE_ID, ///< Event id
 };
 
 /// Base class for errors and events emitted by the data slinger library
@@ -52,7 +52,7 @@ public:
     /// Returns an descriptive string describing what the event is for
     std::string what() const;
 
-    /// Returns an integer id (atomic count starting at 0) for this event
+    /// Returns a numeric id for this event
     std::uint64_t instanceId() const;
 
     const dataslinger::util::HeterogeneousMap<EventDataKeys>& getInfo() const;

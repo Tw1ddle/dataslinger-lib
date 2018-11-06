@@ -23,13 +23,13 @@ std::uint64_t computeMessageSizeBytes();
 
 }
 
+// TODO drop this, should serialize arbitrary data instead
 #pragma pack(push, 1)
 
 /// Packed structure that represents the message/data sent between data slingers and receivers
 struct Message
 {
     dataslinger::message::ids::MessageId id;
-    std::vector<std::byte> m_data;
 };
 
 #pragma pack(pop)

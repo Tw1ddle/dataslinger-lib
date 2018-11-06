@@ -19,7 +19,7 @@ enum class ConnectionInfoDataKeys
     WEBSOCKET_SLINGER_PORT_UINT16
 };
 
-/// Represents info used for establishing connections with the dataslinger/receivers
+/// Represents info used for establishing connections dataslingers/receivers
 class ConnectionInfo
 {
 public:

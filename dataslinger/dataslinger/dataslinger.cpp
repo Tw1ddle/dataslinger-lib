@@ -24,6 +24,7 @@ public:
 
     ~DataSlingerImpl()
     {
+        poll();
     }
 
     DataSlingerImpl(const DataSlingerImpl&) = delete;
