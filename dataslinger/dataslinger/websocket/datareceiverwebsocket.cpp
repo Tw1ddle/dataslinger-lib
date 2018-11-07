@@ -63,9 +63,13 @@ public:
 
     void send(const dataslinger::message::Message& message)
     {
+        const bool isEmpty = m_sendQueue.size_approx() == 0;
+
         m_sendQueue.enqueue(message);
 
-        boost::asio::post(m_socketStream.get_executor(), std::bind(&DataReceiverWebSocketSession::doWrite, this));
+        if(isEmpty) {
+            boost::asio::post(m_socketStream.get_executor(), std::bind(&DataReceiverWebSocketSession::doWrite, this));
+        }
     }
 
     void stop()
@@ -77,7 +81,7 @@ private:
     void onResolve(const boost::system::error_code ec, const boost::asio::ip::tcp::resolver::results_type results)
     {
         if(ec) {
-            queueFatalEvent(ec, "resolve");
+            queueFatalEvent(ec, "Fatal error on resolve");
             return;
         }
 
@@ -90,7 +94,7 @@ private:
     void onConnect(const boost::system::error_code ec)
     {
         if(ec) {
-            queueFatalEvent(ec, "connect");
+            queueFatalEvent(ec, "Fatal error on connect");
             return;
         }
 
@@ -102,7 +106,7 @@ private:
     void onHandshake(const boost::system::error_code ec)
     {
         if(ec) {
-            queueFatalEvent(ec, "handshake");
+            queueFatalEvent(ec, "Fatal error on handshake");
             return;
         }
 
@@ -135,7 +139,7 @@ private:
     void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
         if(ec) {
-            queueFatalEvent(ec, "read");
+            queueFatalEvent(ec, "Fatal error on read");
             return;
         }
 
@@ -154,7 +158,7 @@ private:
     void onWrite(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
         if(ec) {
-            queueFatalEvent(ec, "write");
+            queueFatalEvent(ec, "Fatal error on write");
             return;
         }
 

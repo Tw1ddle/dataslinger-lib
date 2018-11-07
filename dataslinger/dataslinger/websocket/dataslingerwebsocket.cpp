@@ -59,16 +59,20 @@ public:
 
     void send(const dataslinger::message::Message& message)
     {
+        const bool isEmpty = m_sendQueue.size_approx() == 0;
+
         m_sendQueue.enqueue(message);
 
-        boost::asio::post(m_socketStream.get_executor(), std::bind(&DataSlingerWebSocketSession::doWrite, this));
+        if(isEmpty) {
+            boost::asio::post(m_socketStream.get_executor(), std::bind(&DataSlingerWebSocketSession::doWrite, this));
+        }
     }
 
 private:
     void onAccept(const boost::system::error_code ec)
     {
         if(ec) {
-            queueFatalEvent(ec, "accept");
+            queueFatalEvent(ec, "Fatal error on accept");
             return;
         }
 
@@ -101,7 +105,7 @@ private:
     void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
         if(ec) {
-            queueFatalEvent(ec, "read");
+            queueFatalEvent(ec, "Fatal error on read");
             return;
         }
 
@@ -176,7 +180,7 @@ public:
 
         m_acceptor.open(m_endpoint.protocol(), ec);
         if(ec) {
-            queueFatalEvent(ec, "open");
+            queueFatalEvent(ec, "Fatal error on opening acceptor");
             return;
         }
 
@@ -184,7 +188,7 @@ public:
 
         m_acceptor.set_option(boost::asio::socket_base::reuse_address(true), ec);
         if(ec) {
-            queueFatalEvent(ec, "set_option");
+            queueFatalEvent(ec, "Fatal error on setting up address reuse");
             return;
         }
 
@@ -192,23 +196,22 @@ public:
 
         m_acceptor.bind(m_endpoint, ec);
         if(ec) {
-            queueFatalEvent(ec, "bind");
+            queueFatalEvent(ec, "Fatal error on binding to server address");
             return;
         }
 
         queueInformationalEvent("Will start listening for connections");
 
         m_acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
-
         if(ec) {
-            queueFatalEvent(ec, "listen");
+            queueFatalEvent(ec, "Fatal error on starting listening");
             return;
         }
 
         queueInformationalEvent("Will check if acceptor is open");
 
         if(!m_acceptor.is_open()) {
-            queueFatalEvent("acceptor not open");
+            queueFatalEvent("Fatal error, acceptor should be open but wasn't");
             return;
         }
 
@@ -248,7 +251,8 @@ private:
         queueInformationalEvent("Did accept incoming connection");
 
         if(ec) {
-            queueFatalEvent(ec, "accept");
+            queueFatalEvent(ec, "Fatal error on accept");
+            return;
         } else {
             queueInformationalEvent("Will create new session");
 
