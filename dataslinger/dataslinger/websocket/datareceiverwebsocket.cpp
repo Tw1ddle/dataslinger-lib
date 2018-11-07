@@ -61,6 +61,9 @@ public:
     void send(const dataslinger::message::Message& message)
     {
         m_sendQueue.push(message);
+
+        // TODO only if sendQueue was empty
+        boost::asio::post(m_socketStream.get_executor(), std::bind(&DataReceiverWebSocketSession::doWrite, this));
     }
 
     void stop()
@@ -104,7 +107,6 @@ private:
         queueInformationalEvent("Did receive websocket upgrade handshake response");
 
         doRead();
-        doWrite();
     }
 
     void doRead()
@@ -117,19 +119,13 @@ private:
 
     void doWrite()
     {
-        queueInformationalEvent("Will wait for a message to appear in the send queue");
+        queueInformationalEvent("Will attempt to write a message");
 
-        // TODO use condition var or similar, and make it so thread dies when service is stopped - possibly build into the io service
-        // TODO this approach will hang up a whole thread, breaks everything!!!
-        while(!m_sendQueue.read_available()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-
-        queueInformationalEvent("Will write a message");
-
-        m_sendQueue.consume_one([this](const dataslinger::message::Message& m) {
+        if(!(m_sendQueue.consume_one([this](const dataslinger::message::Message& m) {
             m_sendBuffer = m;
-        });
+        }))) {
+            return;
+        }
 
         m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
             boost::asio::bind_executor(m_strand,
