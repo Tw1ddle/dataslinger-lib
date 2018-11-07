@@ -34,6 +34,11 @@ public:
     DataReceiverImpl(DataReceiverImpl&&) = default;
     DataReceiverImpl& operator=(DataReceiverImpl&&) = default;
 
+    void send(const dataslinger::message::Message& message)
+    {
+        d->send(message);
+    }
+
     void poll()
     {
         d->poll();
@@ -66,6 +71,11 @@ DataReceiver& DataReceiver::operator=(DataReceiver&& other)
     d = std::move(other.d);
     other.d = nullptr;
     return *this;
+}
+
+void DataReceiver::send(const dataslinger::message::Message& message)
+{
+    d->send(message);
 }
 
 void DataReceiver::poll()

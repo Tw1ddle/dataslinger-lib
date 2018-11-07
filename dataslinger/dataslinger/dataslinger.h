@@ -21,7 +21,7 @@ public:
     DataSlinger(DataSlinger&&);
     DataSlinger& operator=(DataSlinger&&);
 
-    /// Sends a message to any connected receivers (enqueues for sending in some cases)
+    /// Sends a message to any connected/attached receivers (enqueues for sending in some cases)
     void send(const dataslinger::message::Message& message);
 
     /// Poll to process responses from any connected receiver sessions and handle any events that have occurred

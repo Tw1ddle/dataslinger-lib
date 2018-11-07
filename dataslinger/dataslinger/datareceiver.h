@@ -21,6 +21,9 @@ public:
     DataReceiver(DataReceiver&&);
     DataReceiver& operator=(DataReceiver&&);
 
+    /// Sends a message to the slinger (enqueues for sending in some cases)
+    void send(const dataslinger::message::Message& message);
+
     /// Poll to process new messages that have been received and events that have occurred
     void poll();
 

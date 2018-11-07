@@ -28,6 +28,9 @@ public:
     /// Call once to set the receiver up
     void run();
 
+    /// Enqueue a message ready to be sent
+    void send(const dataslinger::message::Message& message);
+
     /// Poll the receiver to process new messages received or events that have occurred
     void poll();
 

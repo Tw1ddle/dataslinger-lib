@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 #include "dataslinger/util/heterogeneousmap.h"
 
 namespace dataslinger

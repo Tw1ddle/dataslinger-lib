@@ -81,6 +81,27 @@ private:
             std::bind(&DataSlingerWebSocketSession::onRead, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
     }
 
+    void doWrite()
+    {
+        queueInformationalEvent("Will wait for a message to appear in the send queue");
+
+        // TODO use condition var or similar, and make it so thread dies when service is stopped - possibly build into the io service
+        // TODO this approach will hang up a whole thread most of the time, breaks everything!!!
+        while(!m_sendQueue.read_available()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+
+        queueInformationalEvent("Will write a message");
+
+        m_sendQueue.consume_one([this](const dataslinger::message::Message& m) {
+            m_sendBuffer = m;
+        });
+
+        m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
+            boost::asio::bind_executor(m_strand,
+            std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
+    }
+
     void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
     {
         if(ec) {
@@ -98,28 +119,6 @@ private:
         m_receiveBuffer.consume(m_receiveBuffer.size());
 
         doRead();
-        doWrite();
-    }
-
-    void doWrite()
-    {
-        queueInformationalEvent("Will wait for a message to appear in the send queue");
-
-        // TODO use condition var or similar, and make it so thread dies when service is stopped - possibly build into the io service
-        // TODO this approach will hang up a whole thread most of the time, will break horribly
-        while(!m_sendQueue.read_available()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-
-        queueInformationalEvent("Will write a message");
-
-        m_sendQueue.consume_one([this](const dataslinger::message::Message& m) {
-            m_sendBuffer = m;
-        });
-
-        m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
-            boost::asio::bind_executor(m_strand,
-            std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
     }
 
     void onWrite(const boost::system::error_code ec, const std::size_t bytesTransferred)
@@ -131,9 +130,7 @@ private:
 
         queueInformationalEvent(std::string("Did perform write of ").append(std::to_string(bytesTransferred)).append(" bytes"));
 
-        queueInformationalEvent("Did write, will clear intermediate buffer and continue to write messages as necessary");
-
-        m_sendBuffer.clear();
+        queueInformationalEvent("Did write, will continue to write messages as necessary");
 
         doWrite();
     }
@@ -160,7 +157,7 @@ private:
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_socketStream;
     boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
     boost::beast::flat_buffer m_receiveBuffer;
-    std::vector<std::byte> m_sendBuffer; // TODO how to use a beast buffer type with this
+    std::vector<std::byte> m_sendBuffer;
 
     boost::lockfree::spsc_queue<dataslinger::message::Message, boost::lockfree::fixed_sized<true>> m_sendQueue{10000}; ///< Queue that grows as messages are enqueued to be sent
     boost::lockfree::spsc_queue<dataslinger::message::Message, boost::lockfree::fixed_sized<true>> m_receiveQueue{10000}; ///< Queue that grows as slinger receives messages
@@ -313,6 +310,7 @@ public:
 
     ~DataSlingerWebSocketImpl()
     {
+        stop();
     }
 
     DataSlingerWebSocketImpl(const DataSlingerWebSocketImpl&) = delete;
