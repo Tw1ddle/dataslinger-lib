@@ -7,7 +7,7 @@
 #include "dataslinger/connection/connectioninfo.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"
-#include "dataslinger/websocket/dataslingerwebsocket.h"
+#include "dataslinger/backend/factory/dataslingerfactory.h"
 
 namespace dataslinger
 {
@@ -15,10 +15,10 @@ namespace dataslinger
 class DataSlinger::DataSlingerImpl
 {
 public:
-    DataSlingerImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<websocket::DataSlingerWebSocket>(onReceive, onEvent, info)}
+    DataSlingerImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : m_backend{dataslinger::factory::makeSlingerBackend(onReceive, onEvent, info)}
     {
-        m_slingerFuture = std::async(std::launch::async, [this]{
-            d->run();
+        m_slingerFuture = std::async(std::launch::async, [this] {
+            m_backend.run();
         });
     }
 
@@ -34,17 +34,17 @@ public:
 
     void send(const dataslinger::message::Message& message)
     {
-        d->send(message);
+        m_backend.send(message);
     }
 
     void poll()
     {
-        d->poll();
+        m_backend.poll();
     }
 
 private:
     std::future<void> m_slingerFuture;
-    std::unique_ptr<websocket::DataSlingerWebSocket> d;
+    dataslinger::factory::Backend m_backend;
 };
 
 DataSlinger::DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<DataSlinger::DataSlingerImpl>(onReceive, onEvent, info)}

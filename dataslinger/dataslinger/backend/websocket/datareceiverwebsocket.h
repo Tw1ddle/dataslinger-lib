@@ -3,7 +3,6 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/datareceiver.h"
 #include "dataslinger/connection/connectioninfo.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"

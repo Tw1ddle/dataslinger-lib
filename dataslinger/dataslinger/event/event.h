@@ -13,7 +13,7 @@ namespace event
 enum class EventKind
 {
     INFORMATIONAL,
-    ERROR,
+    ERROR
 };
 
 enum class EventSourceKind

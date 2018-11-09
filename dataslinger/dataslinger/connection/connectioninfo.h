@@ -8,9 +8,18 @@ namespace dataslinger
 namespace connection
 {
 
+enum class PreferredBackend
+{
+    PIPE,
+    SHARED_VECTOR,
+    WEBSOCKET
+};
+
 /// Enum whose values represent connection info field names/keys
 enum class ConnectionInfoDataKeys
 {
+    PREFERRED_BACKEND,
+
     WEBSOCKET_RECEIVER_HOST_STRING,
     WEBSOCKET_RECEIVER_PORT_UINT16,
     WEBSOCKET_SLINGER_HOST_STRING,
