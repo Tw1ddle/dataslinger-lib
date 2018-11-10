@@ -3,21 +3,21 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"
 
 namespace dataslinger
 {
 
-namespace pipe
+namespace sharedvector
 {
 
 /// Shared memory vector IPC backend
 class SharedVector
 {
 public:
-    SharedVector(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info);
+    SharedVector(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info);
     ~SharedVector();
     SharedVector(const SharedVector&) = delete;
     SharedVector& operator=(const SharedVector&) = delete;

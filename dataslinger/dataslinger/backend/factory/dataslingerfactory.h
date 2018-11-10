@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"
 
@@ -20,7 +20,7 @@ struct Backend
     std::function<void()> poll;
 };
 
-template<typename T> Backend makeBackendHelper(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info)
+template<typename T> Backend makeBackendHelper(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info)
 {
     std::shared_ptr<T> impl = std::make_shared<T>(onReceive, onEvent, info);
     T* pImpl = impl.get();
@@ -34,7 +34,7 @@ template<typename T> Backend makeBackendHelper(const std::function<void(const da
     return backend;
 }
 
-Backend makeSlingerBackend(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info);
+Backend makeSlingerBackend(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info);
 
 }
 }

@@ -1,10 +1,10 @@
-#include "dataslinger/dataslinger.h"
+#include "dataslinger/backend/dataslinger.h"
 
 #include <cstdlib>
 #include <future>
 #include <memory>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"
 #include "dataslinger/backend/factory/dataslingerfactory.h"
@@ -15,7 +15,7 @@ namespace dataslinger
 class DataSlinger::DataSlingerImpl
 {
 public:
-    DataSlingerImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : m_backend{dataslinger::factory::makeSlingerBackend(onReceive, onEvent, info)}
+    DataSlingerImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info) : m_backend{dataslinger::factory::makeSlingerBackend(onReceive, onEvent, info)}
     {
         m_slingerFuture = std::async(std::launch::async, [this] {
             m_backend.run();
@@ -47,7 +47,7 @@ private:
     dataslinger::factory::Backend m_backend;
 };
 
-DataSlinger::DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<DataSlinger::DataSlingerImpl>(onReceive, onEvent, info)}
+DataSlinger::DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info) : d{std::make_unique<DataSlinger::DataSlingerImpl>(onReceive, onEvent, info)}
 {
 }
 

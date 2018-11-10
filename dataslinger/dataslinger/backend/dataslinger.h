@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"
 
@@ -14,7 +14,7 @@ namespace dataslinger
 class DataSlinger
 {
 public:
-    DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info);
+    DataSlinger(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info);
     ~DataSlinger();
     DataSlinger(const DataSlinger&) = delete;
     DataSlinger& operator=(const DataSlinger&) = delete;

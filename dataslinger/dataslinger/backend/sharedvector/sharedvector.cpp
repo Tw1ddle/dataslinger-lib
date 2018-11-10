@@ -11,7 +11,7 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/segment_manager.hpp>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/event/eventhelpers.h"
 #include "dataslinger/message/message.h"
@@ -34,13 +34,13 @@ public:
 
 namespace dataslinger
 {
-namespace pipe
+namespace sharedvector
 {
 
 class SharedVector::SharedVectorImpl
 {
 public:
-    SharedVectorImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : m_sharedData{nullptr}, m_onReceive{onReceive}, m_onEvent{onEvent}, m_info{info}
+    SharedVectorImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info) : m_sharedData{nullptr}, m_onReceive{onReceive}, m_onEvent{onEvent}, m_info{info}
     {
         // Create a new segment with given name and size
         boost::interprocess::managed_shared_memory segment(boost::interprocess::create_only, "MySharedMemory", 65536);
@@ -79,10 +79,10 @@ private:
 
     const std::function<void(const dataslinger::message::Message&)> m_onReceive; ///< Callback triggered when the slinger receives a message
     const std::function<void(const dataslinger::event::Event&)> m_onEvent; ///< Callback triggered when the slinger produces an event
-    const dataslinger::connection::ConnectionInfo m_info; ///< Connection info
+    const dataslinger::connection::ConnectionOptions m_info; ///< Connection info
 };
 
-SharedVector::SharedVector(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info) : d{std::make_unique<SharedVectorImpl>(onReceive, onEvent, info)}
+SharedVector::SharedVector(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info) : d{std::make_unique<SharedVectorImpl>(onReceive, onEvent, info)}
 {
 }
 

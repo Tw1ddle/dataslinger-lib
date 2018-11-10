@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/message/message.h"
 
@@ -17,7 +17,7 @@ namespace pipe
 class DataSlingerPipe
 {
 public:
-    DataSlingerPipe(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info);
+    DataSlingerPipe(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info);
     ~DataSlingerPipe();
     DataSlingerPipe(const DataSlingerPipe&) = delete;
     DataSlingerPipe& operator=(const DataSlingerPipe&) = delete;

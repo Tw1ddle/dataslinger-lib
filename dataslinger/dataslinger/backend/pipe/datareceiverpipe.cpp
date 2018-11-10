@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/event/eventhelpers.h"
 #include "dataslinger/message/message.h"
@@ -15,7 +15,7 @@ namespace pipe
 class DataReceiverPipe::DataReceiverPipeImpl
 {
 public:
-    DataReceiverPipeImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info)
+    DataReceiverPipeImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info)
         : m_onReceive{onReceive}, m_onEvent{onEvent}
     {
     }
@@ -46,7 +46,7 @@ private:
     const std::function<void(const dataslinger::event::Event&)> m_onEvent;
 };
 
-DataReceiverPipe::DataReceiverPipe(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info)
+DataReceiverPipe::DataReceiverPipe(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info)
     : d{std::make_unique<DataReceiverPipeImpl>(onReceive, onEvent, info)}
 {
 }

@@ -17,7 +17,7 @@
 
 #include "concurrentqueue.h"
 
-#include "dataslinger/connection/connectioninfo.h"
+#include "dataslinger/connection/connectionoptions.h"
 #include "dataslinger/event/event.h"
 #include "dataslinger/event/eventhelpers.h"
 #include "dataslinger/message/message.h"
@@ -29,14 +29,14 @@ namespace
 class DataReceiverWebSocketSession : public std::enable_shared_from_this<DataReceiverWebSocketSession>
 {
 public:
-    DataReceiverWebSocketSession(const dataslinger::connection::ConnectionInfo& info) : m_info{info}, m_resolver(m_ioContext), m_socketStream(m_ioContext), m_strand(m_socketStream.get_executor())
+    DataReceiverWebSocketSession(const dataslinger::connection::ConnectionOptions& info) : m_info{info}, m_resolver(m_ioContext), m_socketStream(m_ioContext), m_strand(m_socketStream.get_executor())
     {
         m_socketStream.binary(true);
     }
 
     void run()
     {
-        if(!m_info.hasWebSocketReceiverInfo()) {
+        if(!m_info.hasWebSocketInfo()) {
             queueFatalEvent("Will fail to create receiver, missing connection info");
             return;
         }
@@ -188,15 +188,15 @@ private:
 
     std::string getHost() const
     {
-        return m_info.getInfo().getValue<std::string>(dataslinger::connection::ConnectionInfoDataKeys::WEBSOCKET_RECEIVER_HOST_STRING);
+        return m_info.getInfo().getValue<std::string>(dataslinger::connection::ConnectionOption::WEBSOCKET_HOST_STRING);
     }
 
     std::uint16_t getPort() const
     {
-         return m_info.getInfo().getValue<std::uint16_t>(dataslinger::connection::ConnectionInfoDataKeys::WEBSOCKET_RECEIVER_PORT_UINT16);
+         return m_info.getInfo().getValue<std::uint16_t>(dataslinger::connection::ConnectionOption::WEBSOCKET_PORT_UINT16);
     }
 
-    const dataslinger::connection::ConnectionInfo m_info; ///< Connection info
+    const dataslinger::connection::ConnectionOptions m_info; ///< Connection info
     boost::asio::io_context m_ioContext;
     boost::asio::ip::tcp::resolver m_resolver;
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_socketStream;
@@ -220,7 +220,7 @@ namespace websocket
 class DataReceiverWebSocket::DataReceiverWebSocketImpl
 {
 public:
-    DataReceiverWebSocketImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info)
+    DataReceiverWebSocketImpl(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info)
         : m_onReceive{onReceive}, m_onEvent{onEvent}, m_session{std::make_shared<DataReceiverWebSocketSession>(info)}
     {
     }
@@ -255,7 +255,7 @@ private:
     std::shared_ptr<DataReceiverWebSocketSession> m_session;
 };
 
-DataReceiverWebSocket::DataReceiverWebSocket(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionInfo& info)
+DataReceiverWebSocket::DataReceiverWebSocket(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info)
     : d{std::make_unique<DataReceiverWebSocketImpl>(onReceive, onEvent, info)}
 {
 }
