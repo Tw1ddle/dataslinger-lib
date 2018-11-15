@@ -31,7 +31,7 @@ public:
 
     }
 
-    void send(const dataslinger::message::Message& message)
+    void send(const dataslinger::message::Message& /*message*/)
     {
 
     }

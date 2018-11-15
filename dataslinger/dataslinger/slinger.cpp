@@ -1,5 +1,3 @@
-#pragma once
-
 #include "slinger.h"
 
 #include <functional>
