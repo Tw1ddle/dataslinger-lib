@@ -148,7 +148,7 @@ private:
 
         queueInformationalEvent(std::string("Did perform read of ").append(std::to_string(bytesTransferred)).append(" bytes"));
 
-        const auto msgDataPtr = static_cast<const std::byte*>(m_receiveBuffer.data().data());
+        const auto msgDataPtr = static_cast<const std::uint8_t*>(m_receiveBuffer.data().data());
         m_receiveQueue.enqueue(dataslinger::message::Message(msgDataPtr, msgDataPtr + m_receiveBuffer.size()));
 
         queueInformationalEvent("Appended message to received queue, will clear intermediate buffer and continue to wait to receive messages");
@@ -208,7 +208,7 @@ private:
     boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
 
     boost::beast::flat_buffer m_receiveBuffer; ///< Buffer that stores the most recently received WebSocket message
-    std::vector<std::byte> m_sendBuffer;
+    std::vector<std::uint8_t> m_sendBuffer;
 
     std::atomic<bool> m_isWriting;
     moodycamel::ConcurrentQueue<dataslinger::message::Message> m_sendQueue; ///< Queue that grows as messages are enqueued to be sent

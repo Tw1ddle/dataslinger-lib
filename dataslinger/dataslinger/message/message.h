@@ -9,7 +9,7 @@ namespace dataslinger
 namespace message
 {
 
-using Message = std::vector<std::byte>;
+using Message = std::vector<std::uint8_t>;
 
 }
 
