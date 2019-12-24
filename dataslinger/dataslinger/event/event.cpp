@@ -1,4 +1,4 @@
-#include "dataslinger/event/event.h"
+#include "dataslinger/slinger.h"
 
 #include <atomic>
 #include <cstdint>
@@ -16,10 +16,7 @@ std::uint64_t createId()
 
 }
 
-namespace dataslinger
-{
-
-namespace event
+namespace dataslinger::event
 {
 
 Event::Event(const dataslinger::util::HeterogeneousMap<EventDataKeys>& info) : m_info{info}
@@ -42,8 +39,6 @@ const dataslinger::util::HeterogeneousMap<EventDataKeys>& Event::getInfo() const
 std::uint64_t Event::instanceId() const
 {
     return m_info.getValue<std::uint64_t>(EventDataKeys::INSTANCE_ID);
-}
-
 }
 
 }

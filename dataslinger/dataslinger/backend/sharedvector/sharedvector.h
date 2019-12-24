@@ -3,14 +3,9 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/connection/connectionoptions.h"
-#include "dataslinger/event/event.h"
-#include "dataslinger/message/message.h"
+#include "dataslinger/slinger.h"
 
-namespace dataslinger
-{
-
-namespace sharedvector
+namespace dataslinger::sharedvector
 {
 
 /// Shared memory vector IPC backend
@@ -37,7 +32,5 @@ private:
     class SharedVectorImpl;
     std::unique_ptr<SharedVectorImpl> d;
 };
-
-}
 
 }

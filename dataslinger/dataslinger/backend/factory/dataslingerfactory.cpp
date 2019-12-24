@@ -4,13 +4,11 @@
 #include <functional>
 #include <optional>
 
+#include "dataslinger/slinger.h"
 #include "dataslinger/backend/pipe/datareceiverpipe.h"
 #include "dataslinger/backend/sharedvector/sharedvector.h"
 #include "dataslinger/backend/websocket/datareceiverwebsocket.h"
 #include "dataslinger/backend/websocket/dataslingerwebsocket.h"
-#include "dataslinger/connection/connectionoptions.h"
-#include "dataslinger/event/event.h"
-#include "dataslinger/message/message.h"
 
 dataslinger::factory::Backend dataslinger::factory::makeSlingerBackend(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info)
 {

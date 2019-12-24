@@ -2,14 +2,10 @@
 
 #include <functional>
 
-#include "dataslinger/connection/connectionoptions.h"
-#include "dataslinger/event/event.h"
+#include "dataslinger/slinger.h"
 #include "dataslinger/event/eventhelpers.h"
-#include "dataslinger/message/message.h"
 
-namespace dataslinger
-{
-namespace pipe
+namespace dataslinger::pipe
 {
 
 class DataSlingerPipe::DataSlingerPipeImpl
@@ -69,5 +65,4 @@ void DataSlingerPipe::poll()
     d->poll();
 }
 
-}
 }

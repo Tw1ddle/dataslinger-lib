@@ -2,10 +2,7 @@
 
 #include <string>
 
-namespace dataslinger
-{
-
-namespace event
+namespace dataslinger::event
 {
 
 Event makeEvent(const dataslinger::event::EventSourceKind source, const std::string& message)
@@ -25,8 +22,6 @@ Event makeEvent(const dataslinger::event::EventSourceKind source, const dataslin
         { dataslinger::event::EventDataKeys::ERROR_SEVERITY, errorSeverity },
         { dataslinger::event::EventDataKeys::MESSAGE_STRING, std::string(message) }
     }});
-}
-
 }
 
 }

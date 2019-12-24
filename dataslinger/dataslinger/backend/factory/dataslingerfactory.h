@@ -3,13 +3,9 @@
 #include <functional>
 #include <memory>
 
-#include "dataslinger/connection/connectionoptions.h"
-#include "dataslinger/event/event.h"
-#include "dataslinger/message/message.h"
+#include "dataslinger/slinger.h"
 
-namespace dataslinger
-{
-namespace factory
+namespace dataslinger::factory
 {
 
 struct Backend
@@ -36,5 +32,4 @@ template<typename T> Backend makeBackendHelper(const std::function<void(const da
 
 Backend makeSlingerBackend(const std::function<void(const dataslinger::message::Message&)>& onReceive, const std::function<void(const dataslinger::event::Event&)>& onEvent, const dataslinger::connection::ConnectionOptions& info);
 
-}
 }

@@ -11,10 +11,8 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/segment_manager.hpp>
 
-#include "dataslinger/connection/connectionoptions.h"
-#include "dataslinger/event/event.h"
+#include "dataslinger/slinger.h"
 #include "dataslinger/event/eventhelpers.h"
-#include "dataslinger/message/message.h"
 
 namespace
 {
@@ -32,9 +30,7 @@ public:
 
 }
 
-namespace dataslinger
-{
-namespace sharedvector
+namespace dataslinger::sharedvector
 {
 
 class SharedVector::SharedVectorImpl
@@ -105,5 +101,4 @@ void SharedVector::poll()
     d->poll();
 }
 
-}
 }

@@ -1,12 +1,9 @@
-#include "dataslinger/backend/dataslinger.h"
+#include "dataslinger/slinger.h"
 
 #include <cstdlib>
 #include <future>
 #include <memory>
 
-#include "dataslinger/connection/connectionoptions.h"
-#include "dataslinger/event/event.h"
-#include "dataslinger/message/message.h"
 #include "dataslinger/backend/factory/dataslingerfactory.h"
 
 namespace dataslinger

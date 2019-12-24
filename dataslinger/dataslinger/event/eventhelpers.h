@@ -1,13 +1,10 @@
 #pragma once
 
-#include "dataslinger/event/event.h"
+#include "dataslinger/slinger.h"
 
 #include <string>
 
-namespace dataslinger
-{
-
-namespace event
+namespace dataslinger::event
 {
 
 /// Helper function that creates an informational event with source data
@@ -15,7 +12,5 @@ Event makeEvent(const dataslinger::event::EventSourceKind source, const std::str
 
 /// Helper function that creates an error event with source data
 Event makeEvent(const dataslinger::event::EventSourceKind source, const dataslinger::event::ErrorSeverity errorSeverity, const std::string& message);
-
-}
 
 }
