@@ -2,6 +2,8 @@
 
 // NOTE: using any-lite directly below in place of std::any so older compilers can use the library
 
+#define any_CONFIG_SELECT_ANY 1 // Force usage of non-std any since we rely on it internally, since we may compile dataslinger as a static library
+
 //
 // Copyright (c) 2016-2018 Martin Moene
 //
