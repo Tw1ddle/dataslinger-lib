@@ -18,7 +18,7 @@ Create Slinger objects, passing in callbacks and the ConnectionOptions for the b
 
 ## Building
 
-Requires C++17 support, depends on boost 1.68 and [concurrentqueue](https://github.com/cameron314/concurrentqueue).
+Requires C++17 support, depends on boost 1.78.0 and [concurrentqueue](https://github.com/cameron314/concurrentqueue).
 
 ## Screenshots
 

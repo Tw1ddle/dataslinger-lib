@@ -28,7 +28,7 @@ namespace
 class DataReceiverWebSocketSession : public std::enable_shared_from_this<DataReceiverWebSocketSession>
 {
 public:
-    DataReceiverWebSocketSession(const dataslinger::connection::ConnectionOptions& info) : m_info{info}, m_resolver(m_ioContext), m_socketStream(m_ioContext), m_strand(m_socketStream.get_executor()), m_isWriting{false}
+    DataReceiverWebSocketSession(const dataslinger::connection::ConnectionOptions& info) : m_info{info}, m_resolver(m_ioContext), m_socketStream(boost::asio::make_strand(m_ioContext)), m_isWriting{false}
     {
         m_socketStream.binary(true);
     }
@@ -133,8 +133,7 @@ private:
         m_isWriting = true;
 
         m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
-            boost::asio::bind_executor(m_strand,
-            std::bind(&DataReceiverWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
+            std::bind(&DataReceiverWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
     }
 
     void onRead(const boost::system::error_code ec, const std::size_t bytesTransferred)
@@ -203,7 +202,6 @@ private:
     boost::asio::io_context m_ioContext;
     boost::asio::ip::tcp::resolver m_resolver;
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_socketStream;
-    boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
 
     boost::beast::flat_buffer m_receiveBuffer; ///< Buffer that stores the most recently received WebSocket message
     std::vector<std::uint8_t> m_sendBuffer;

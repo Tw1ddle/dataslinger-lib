@@ -30,7 +30,7 @@ namespace
 class DataSlingerWebSocketSession : public std::enable_shared_from_this<DataSlingerWebSocketSession>
 {
 public:
-    explicit DataSlingerWebSocketSession(boost::asio::ip::tcp::socket socket) : m_socketStream(std::move(socket)), m_strand(m_socketStream.get_executor()), m_isWriting{false}
+    explicit DataSlingerWebSocketSession(boost::asio::ip::tcp::socket socket) : m_socketStream(std::move(socket)), m_isWriting{false}
     {
         m_socketStream.binary(true);
     }
@@ -39,7 +39,7 @@ public:
     {
         queueInformationalEvent("Will asynchronously wait to accept the websocket upgrade request");
 
-        m_socketStream.async_accept(boost::asio::bind_executor(m_strand,
+        m_socketStream.async_accept(boost::asio::bind_executor(m_socketStream.get_executor(),
             std::bind(&DataSlingerWebSocketSession::onAccept, shared_from_this(), std::placeholders::_1)));
     }
 
@@ -94,7 +94,7 @@ private:
         m_isWriting = true;
 
         m_socketStream.async_write(boost::asio::const_buffer(reinterpret_cast<void*>(m_sendBuffer.data()), m_sendBuffer.size()),
-            boost::asio::bind_executor(m_strand,
+            boost::asio::bind_executor(m_socketStream.get_executor(),
             std::bind(&DataSlingerWebSocketSession::onWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2)));
     }
 
@@ -153,7 +153,6 @@ private:
     }
 
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_socketStream;
-    boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
     boost::beast::flat_buffer m_receiveBuffer;
     std::vector<std::uint8_t> m_sendBuffer;
 
