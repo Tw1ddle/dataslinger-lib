@@ -1,0 +1,116 @@
+branches:
+  only:
+    - master
+
+# Note that builds run in the order the images are declared
+image:
+  - Ubuntu2004
+  - macos-bigsur
+  - Visual Studio 2019
+
+# Define the build configurations
+environment:
+  GITHUB_API_KEY:
+    secure: w1zaTUARBAuhkAKUke5sBvSkVtlDGL8YfQxROzv5oGIynVJImn+KWGFVDxyjQore
+
+  matrix:
+    - BUILD_NAME: gcc_linux
+    - BUILD_NAME: clang_osx
+    - BUILD_NAME: msvc_windows
+      QTDIR: C:\Qt\6.2\msvc2019_64
+
+# Exclude invalid build configurations
+matrix:
+  exclude:
+    - image: Ubuntu2004
+      BUILD_NAME: msvc_windows
+    - image: Ubuntu2004
+      BUILD_NAME: clang_osx
+
+    - image: macos-bigsur
+      BUILD_NAME: msvc_windows
+    - image: macos-bigsur
+      BUILD_NAME: gcc_linux
+
+    - image: Visual Studio 2019
+      BUILD_NAME: clang_osx
+    - image: Visual Studio 2019
+      BUILD_NAME: gcc_linux
+
+configuration:
+  - debug
+  - release
+
+# Do configuration-specific build steps
+for:
+
+  # Linux GCC
+  - matrix:
+      only:
+        - image: Ubuntu2004
+          BUILD_NAME: gcc_linux
+
+    install:
+      - git submodule update --init --recursive
+
+    before_build:
+      # Debug prints
+      - cd $HOME/Qt
+      - ls -a
+
+      - cd $APPVEYOR_BUILD_FOLDER
+      - qmake dataslinger_static.pro
+
+    build_script:
+      - cd $APPVEYOR_BUILD_FOLDER
+      - make
+
+
+
+  # Clang OSX
+  - matrix:
+      only:
+        - image: macos-bigsur
+          BUILD_NAME: clang_osx
+
+    install:
+      - git submodule update --init --recursive
+
+    before_build:
+      # Debug prints
+      - cd $HOME/Qt
+      - ls -a
+
+      - cd $APPVEYOR_BUILD_FOLDER     
+      - qmake dataslinger_static.pro
+
+    build_script:
+      - cd $APPVEYOR_BUILD_FOLDER
+      - make
+
+
+
+  # Windows MSVC
+  - matrix:
+      only:
+        - image: Visual Studio 2019
+          BUILD_NAME: msvc_windows
+
+    install:
+      - git submodule update --init --recursive
+      - set PATH=%PATH%;%QTDIR%\bin
+      - call "%QTDIR%\bin\qtenv2.bat"
+      - call "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+      - set make=nmake.exe
+
+    before_build:
+      # Debug prints
+      - cd %QTDIR%
+      - ls -a
+
+      - cd %APPVEYOR_BUILD_FOLDER%
+      - qmake dataslinger_static.pro
+
+    build_script:
+      - cd %APPVEYOR_BUILD_FOLDER%
+      - '%make%'
