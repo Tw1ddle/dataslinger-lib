@@ -17,7 +17,6 @@ environment:
     - BUILD_NAME: gcc_linux
     - BUILD_NAME: clang_osx
     - BUILD_NAME: msvc_windows
-      QTDIR: C:\Qt\6.2\msvc2019_64
 
 # Exclude invalid build configurations
 matrix:
@@ -53,7 +52,8 @@ for:
     install:
       - git submodule update --init --recursive
       - export PATH=$HOME/Qt/6.1/gcc_64/bin:$PATH
-      - sudo apt-get install libboost-all-dev
+      - sudo apt update -qq --yes --force-yes
+      - sudo apt install libboost-all-dev  --yes --force-yes
 
     before_build:
       # Debug prints
