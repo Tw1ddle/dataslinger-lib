@@ -52,6 +52,7 @@ for:
 
     install:
       - git submodule update --init --recursive
+      - export PATH=$HOME/Qt/6.1/gcc_64/bin:$PATH
 
     before_build:
       # Debug prints
@@ -75,6 +76,7 @@ for:
 
     install:
       - git submodule update --init --recursive
+      - export PATH=$HOME/Qt/6.1/macos/bin:$PATH
 
     before_build:
       # Debug prints
