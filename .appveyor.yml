@@ -53,18 +53,20 @@ for:
     install:
       - git submodule update --init --recursive
       - export PATH=$HOME/Qt/6.1/gcc_64/bin:$PATH
+      - sudo apt-get install libboost-all-dev
 
     before_build:
       # Debug prints
       - cd $HOME/Qt
       - ls -a
 
+      # TODO need to set correct boost path etc
       - cd $APPVEYOR_BUILD_FOLDER
-      - qmake dataslinger_static.pro
+      #- qmake dataslinger_static.pro
 
     build_script:
       - cd $APPVEYOR_BUILD_FOLDER
-      - make
+      #- make
 
 
 
@@ -73,6 +75,7 @@ for:
       only:
         - image: macos-bigsur
           BUILD_NAME: clang_osx
+          DATASLINGER_BOOST_PATH: C:\Libraries\boost_1_77_0
 
     install:
       - git submodule update --init --recursive
@@ -83,12 +86,13 @@ for:
       - cd $HOME/Qt
       - ls -a
 
+      # TODO need to set correct boost path etc
       - cd $APPVEYOR_BUILD_FOLDER     
-      - qmake dataslinger_static.pro
+      #- qmake dataslinger_static.pro
 
     build_script:
       - cd $APPVEYOR_BUILD_FOLDER
-      - make
+      #- make
 
 
 
@@ -97,6 +101,8 @@ for:
       only:
         - image: Visual Studio 2019
           BUILD_NAME: msvc_windows
+          DATASLINGER_BOOST_PATH: C:\Libraries\boost_1_77_0
+          QTDIR: C:\Qt\6.2\msvc2019_64
 
     install:
       - git submodule update --init --recursive
