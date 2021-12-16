@@ -1,12 +1,14 @@
+# Builds a static version of the dataslinger library
+
 TEMPLATE = lib
-CONFIG += staticlib
+CONFIG += staticlib c++17
 
-CONFIG += c++17
+win32:APPVEYOR {
+    INCLUDEPATH += $$(DATASLINGER_BOOST_PATH)
+    LIBS += "-L$$(DATASLINGER_BOOST_PATH)/lib64-msvc-14.2"
+} else {
+    INCLUDEPATH += $$(DATASLINGER_BOOST_PATH)
+    LIBS += "-L$$(DATASLINGER_BOOST_PATH)/stage/x64/lib/"
+}
 
-INCLUDEPATH += $$PWD/dataslinger
-
-# Include library dependencies
-INCLUDEPATH += $$PWD/lib/concurrentqueue/
-
-HEADERS += $$files($$PWD/dataslinger/*.h, true)
-SOURCES += $$files($$PWD/dataslinger/*.cpp, true)
+include($$PWD/dataslinger.pri)

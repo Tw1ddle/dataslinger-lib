@@ -1,7 +1,5 @@
-INCLUDEPATH += $$PWD/dataslinger
+INCLUDEPATH += $$(PWD)/dataslinger
+INCLUDEPATH += $$(PWD)/lib/concurrentqueue/ # Library dependency
 
-# Include library dependencies
-INCLUDEPATH += $$PWD/lib/concurrentqueue/
-
-HEADERS += $$files($$PWD/dataslinger/*.h, true)
-SOURCES += $$files($$PWD/dataslinger/*.cpp, true)
+HEADERS += $$files($$(PWD)/dataslinger/*.h, true)
+SOURCES += $$files($$(PWD)/dataslinger/*.cpp, true)
