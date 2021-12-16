@@ -17,6 +17,8 @@ environment:
     - BUILD_NAME: gcc_linux
     - BUILD_NAME: clang_osx
     - BUILD_NAME: msvc_windows
+      DATASLINGER_BOOST_PATH: C:\Libraries\boost_1_77_0
+      QTDIR: C:\Qt\6.2\msvc2019_64
 
 # Exclude invalid build configurations
 matrix:
@@ -101,8 +103,6 @@ for:
       only:
         - image: Visual Studio 2019
           BUILD_NAME: msvc_windows
-          DATASLINGER_BOOST_PATH: C:\Libraries\boost_1_77_0
-          QTDIR: C:\Qt\6.2\msvc2019_64
 
     install:
       - git submodule update --init --recursive
